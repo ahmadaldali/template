@@ -24,7 +24,7 @@ const ChatContent = ({ conversation }) => {
   const classes = useStyles();
 
   const { otherUser } = conversation;
-  const latestMessageText = conversation.id && conversation.latestMessageText;
+  const latestMessageText = conversation.latestMessageText;
 
   return (
     <Box className={classes.root}>
