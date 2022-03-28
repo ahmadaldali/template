@@ -41,12 +41,11 @@ const Home = ({ user, logout }) => {
         newState.push(fakeConvo);
       }
     });
-
     setConversations(newState);
   };
 
   const clearSearchedUsers = () => {
-    setConversations((prev) => prev.filter((convo) => convo.id));
+    setConversations(conversations);
   };
 
   const saveMessage = async (body) => {
@@ -65,54 +64,52 @@ const Home = ({ user, logout }) => {
   const postMessage = (body) => {
     try {
       const data = saveMessage(body);
-
-      if (!body.conversationId) {
-        addNewConvo(body.recipientId, data.message);
-      } else {
-        addMessageToConversation(data);
-      }
-
-      sendMessage(data, body);
+      data.then(res => {
+        if (!body.conversationId) {
+          addNewConvo(body.recipientId, res.message);
+        } else {
+          addMessageToConversation(res.message);
+        }
+        sendMessage(res, body);
+      });
     } catch (error) {
       console.error(error);
     }
   };
+  
+  const updateCurrentConv =
+    (method, conversations, message, recipientId = null) => {
+      const newState = [...conversations];
+      let currentConv = null;
+      newState.forEach((convo, index) => {
+        const condition = (method === "new") ?
+          convo.otherUser.id === recipientId :
+          convo.id === message.conversationId;
+        if (condition) {
+          convo.messages.unshift(message);
+          convo.latestMessageText = message.text;
+          //remove this conv and set it as the first
+          currentConv = convo;
+          newState.splice(index, 1);
+          return;
+        }
+      });
+      newState.unshift(currentConv);
+      return newState;
+    }
 
   const addNewConvo = useCallback(
     (recipientId, message) => {
-      conversations.forEach((convo) => {
-        if (convo.otherUser.id === recipientId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
-          convo.id = message.conversationId;
-        }
-      });
-      setConversations(conversations);
+      const newState = updateCurrentConv("new", conversations, message, recipientId);
+      setConversations(newState);
     },
     [setConversations, conversations]
   );
 
   const addMessageToConversation = useCallback(
-    (data) => {
-      // if sender isn't null, that means the message needs to be put in a brand new convo
-      const { message, sender = null } = data;
-      if (sender !== null) {
-        const newConvo = {
-          id: message.conversationId,
-          otherUser: sender,
-          messages: [message],
-        };
-        newConvo.latestMessageText = message.text;
-        setConversations((prev) => [newConvo, ...prev]);
-      }
-
-      conversations.forEach((convo) => {
-        if (convo.id === message.conversationId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
-        }
-      });
-      setConversations(conversations);
+    (message) => {
+      const newState = updateCurrentConv("current", conversations, message);
+      setConversations(newState);
     },
     [setConversations, conversations]
   );
@@ -180,14 +177,6 @@ const Home = ({ user, logout }) => {
   }, [user, history, isLoggedIn]);
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const { data } = await axios.get('/api/conversations');
-        setConversations(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
     if (!user.isFetching) {
       fetchConversations();
     }
@@ -196,6 +185,15 @@ const Home = ({ user, logout }) => {
   const handleLogout = async () => {
     if (user && user.id) {
       await logout(user.id);
+    }
+  };
+
+  const fetchConversations = async () => {
+    try {
+      const { data } = await axios.get('/api/conversations');
+      setConversations(data);
+    } catch (error) {
+      console.error(error);
     }
   };
 

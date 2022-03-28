@@ -36,7 +36,6 @@ const ActiveChat = ({
   const isConversation = (obj) => {
     return obj !== {} && obj !== undefined;
   };
-
   return (
     <Box className={classes.root}>
       {isConversation(conversation) && conversation.otherUser && (
