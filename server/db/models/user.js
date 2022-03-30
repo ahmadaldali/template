@@ -1,5 +1,4 @@
 const Sequelize = require("sequelize");
-const { Op } = require("sequelize");
 const db = require("../db");
 const crypto = require("crypto");
 
@@ -62,11 +61,5 @@ User.beforeUpdate(setSaltAndPassword);
 User.beforeBulkCreate((users) => {
   users.forEach(setSaltAndPassword);
 });
-
-
-User.findUser = async function (userId) {
-  const user = await User.findByPk(userId);
-  return user;
-};
 
 module.exports = User;
