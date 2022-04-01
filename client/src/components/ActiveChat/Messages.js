@@ -7,12 +7,6 @@ const Messages = (props) => {
   const { messages, otherUser, userId } = props;
   const messagesNum = messages.length;
 
-  /*
-  * Aonther solution
-  const messagesBottomToTop = messages.reverse();
-  map messagesBottomToTop to create each message
-  */
-
   return (
     <Box>
       {messages.map((_ , index) => {

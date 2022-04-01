@@ -18,7 +18,7 @@ router.get("/", async (req, res, next) => {
           user2Id: userId,
         },
       },
-      attributes: ["id"],
+      attributes: ["id", "user1UnreadMsg", "user2UnreadMsg"],
       order: [[Message, "createdAt", "DESC"]],
       include: [
         { model: Message, order: ["createdAt", "DESC"] },
@@ -46,7 +46,6 @@ router.get("/", async (req, res, next) => {
         },
       ],
     });
-
     for (let i = 0; i < conversations.length; i++) {
       const convo = conversations[i];
       const convoJSON = convo.toJSON();
@@ -74,6 +73,21 @@ router.get("/", async (req, res, next) => {
     res.json(conversations);
   } catch (error) {
     next(error);
+  }
+});
+
+
+router.post("/resetUnreadMsgForCurrentUser" ,async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+    const { id, user1UnreadMsg, user2UnreadMsg } = req.body;
+    const conversation = await Conversation.updateConversation(id, user1UnreadMsg, user2UnreadMsg);
+    res.json(conversation);
+  } catch (error) {
+    next(error);
+    console.log(error);
   }
 });
 

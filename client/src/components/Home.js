@@ -45,7 +45,7 @@ const Home = ({ user, logout }) => {
   };
 
   const clearSearchedUsers = () => {
-    setConversations(conversations);
+    setConversations((prev) => prev.filter((convo) => convo.id));
   };
 
   const saveMessage = async (body) => {
@@ -66,9 +66,9 @@ const Home = ({ user, logout }) => {
       const data = saveMessage(body);
       data.then(res => {
         if (!body.conversationId) {
-          addNewConvo(body.recipientId, res.message);
+          addNewConvo(res, body.recipientId);
         } else {
-          addMessageToConversation(res.message);
+          addMessageToConversation(res, body.recipientId);
         }
         sendMessage(res, body);
       });
@@ -76,46 +76,96 @@ const Home = ({ user, logout }) => {
       console.error(error);
     }
   };
-  
+
   const updateCurrentConv =
-    (method, conversations, message, recipientId = null) => {
+    (method, conversations, data, recipientId) => {
       const newState = [...conversations];
+      const message = data.message;
+      const sender = data.sender;
+
       let currentConv = null;
-      newState.forEach((convo, index) => {
-        const condition = (method === "new") ?
-          convo.otherUser.id === recipientId :
-          convo.id === message.conversationId;
-        if (condition) {
-          convo.messages.unshift(message);
-          convo.latestMessageText = message.text;
-          //remove this conv and set it as the first
-          currentConv = convo;
-          newState.splice(index, 1);
-          return;
-        }
-      });
+      if (recipientId === undefined) {
+        //recipent side
+        currentConv = {
+          id: message.conversationId,
+          otherUser: sender,
+          messages: [message],
+          latestMessageText: message.text,
+          user1: null,
+          user1UnreadMsg: 1
+        };
+
+        newState.forEach((convo, index) => {
+          if (convo.otherUser.id === message.senderId) {
+            convo.messages.unshift(message);
+            convo.latestMessageText = message.text;
+
+            let user1UnreadMsg = convo.hasOwnProperty('user1UnreadMsg')
+              ? convo.user1UnreadMsg : 0;
+            let user2UnreadMsg = convo.hasOwnProperty('user2UnreadMsg')
+              ? convo.user2UnreadMsg : 0;
+
+            (convo.hasOwnProperty('user1')) ?
+              ++user1UnreadMsg :
+              ++user2UnreadMsg;
+
+            currentConv = convo;
+            currentConv.user1UnreadMsg = user1UnreadMsg;
+            currentConv.user2UnreadMsg = user2UnreadMsg;
+
+            newState.splice(index, 1);
+            return;
+          }
+        });
+      }
+      else {
+        //sender side
+        newState.forEach((convo, index) => {
+          if (convo.otherUser.id === recipientId) {
+            convo.messages.unshift(message);
+            convo.latestMessageText = message.text;
+            //remove this conv and set it as the first
+            currentConv = convo;
+            newState.splice(index, 1);
+            return;
+          }
+        });
+      }
       newState.unshift(currentConv);
       return newState;
     }
 
   const addNewConvo = useCallback(
-    (recipientId, message) => {
-      const newState = updateCurrentConv("new", conversations, message, recipientId);
+    (data, recipientId) => {
+      const newState = updateCurrentConv("new", conversations, data, recipientId);
       setConversations(newState);
     },
     [setConversations, conversations]
   );
 
   const addMessageToConversation = useCallback(
-    (message) => {
-      const newState = updateCurrentConv("current", conversations, message);
+    (data, recipientId) => {
+      const newState = updateCurrentConv("current", conversations, data, recipientId);
       setConversations(newState);
     },
     [setConversations, conversations]
   );
 
-  const setActiveChat = (username) => {
-    setActiveConversation(username);
+  const resetUnreadMessage = (conversation) => {
+    conversation.hasOwnProperty('user1')
+      ? conversation.user1UnreadMsg = 0 :
+      conversation.user2UnreadMsg = 0;
+    const body = {
+      id: conversation.id,
+      user1UnreadMsg: conversation.user1UnreadMsg,
+      user2UnreadMsg: conversation.user2UnreadMsg
+    };
+    axios.post('/api/conversations/resetUnreadMsgForCurrentUser', body);
+  }
+
+  const setActiveChat = (conversation) => {
+    resetUnreadMessage(conversation);
+    setActiveConversation(conversation.otherUser.username);
   };
 
   const addOnlineUser = useCallback((id) => {
