@@ -41,6 +41,7 @@ const Home = ({ user, logout }) => {
         newState.push(fakeConvo);
       }
     });
+
     setConversations(newState);
   };
 
@@ -227,6 +228,14 @@ const Home = ({ user, logout }) => {
   }, [user, history, isLoggedIn]);
 
   useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const { data } = await axios.get('/api/conversations');
+        setConversations(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
     if (!user.isFetching) {
       fetchConversations();
     }
@@ -235,15 +244,6 @@ const Home = ({ user, logout }) => {
   const handleLogout = async () => {
     if (user && user.id) {
       await logout(user.id);
-    }
-  };
-
-  const fetchConversations = async () => {
-    try {
-      const { data } = await axios.get('/api/conversations');
-      setConversations(data);
-    } catch (error) {
-      console.error(error);
     }
   };
 
