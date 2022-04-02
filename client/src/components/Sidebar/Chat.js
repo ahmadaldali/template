@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box } from '@material-ui/core';
 import { BadgeAvatar, ChatContent } from '../Sidebar';
+import  UnReadMessage from './UnReadMessage';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
@@ -15,14 +16,32 @@ const useStyles = makeStyles((theme) => ({
       cursor: 'grab',
     },
   },
+
+  circle: {
+    width: '20px',
+    height: '20px',
+    textAlign: 'center',
+    color: 'white',
+    font: '12 Open Sans, Open Sans',
+    backgroundColor: '#3F92FF',
+    border: '2px solid #3F92FF',
+    borderRadius: '50%',
+    borderWidth: 1,
+    marginRight: 10
+  }
 }));
 
 const Chat = ({ conversation, setActiveChat }) => {
   const classes = useStyles();
   const { otherUser } = conversation;
 
+  console.log(conversation);
+  const unreadMsgs = conversation.hasOwnProperty('user1')
+                     ? conversation.user1UnreadMsg
+                     : conversation.user2UnreadMsg;
+
   const handleClick = async (conversation) => {
-    await setActiveChat(conversation.otherUser.username);
+    await setActiveChat(conversation);
   };
 
   return (
@@ -34,6 +53,7 @@ const Chat = ({ conversation, setActiveChat }) => {
         sidebar={true}
       />
       <ChatContent conversation={conversation} />
+      <UnReadMessage unreadMsgs={unreadMsgs} />
     </Box>
   );
 };
