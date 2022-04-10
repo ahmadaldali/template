@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const { Conversation, Message } = require("../../db/models");
 const onlineUsers = require("../../onlineUsers");
-const {increaseUnreadMessage} = require('../readStatus')
 
 // expects {recipientId, text, conversationId } in body (conversationId will be null if no conversation exists yet)
 router.post("/", async (req, res, next) => {
@@ -23,7 +22,6 @@ router.post("/", async (req, res, next) => {
     if (conversation) {
       const conversationId = conversation.id;
       let message = await Message.create({ senderId, text, conversationId });
-      await increaseUnreadMessage(conversation, senderId);
       //return the sender
       return res.json({ message, sender:null });
     }
@@ -41,7 +39,6 @@ router.post("/", async (req, res, next) => {
       text,
       conversationId: conversation.id,
     });
-    await increaseUnreadMessage(conversation, senderId, recipientId);
     res.json({ message, sender });
   } catch (error) {
     next(error);

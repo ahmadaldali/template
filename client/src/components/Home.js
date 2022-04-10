@@ -21,7 +21,6 @@ const Home = ({ user, logout }) => {
 
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
-  const [activeUserId, setActiveUserId ] = useState();
 
   const classes = useStyles();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -106,8 +105,7 @@ const Home = ({ user, logout }) => {
       const { message, sender } = data;
       const newState = [...conversations];
       let currentConv = null;
-      console.log((activeUserId));
-      const onActiveChat = (activeUserId === message.senderId);
+
       if (recipientId === undefined) {
         //recipient  
         if (sender !== null) {
@@ -118,7 +116,6 @@ const Home = ({ user, logout }) => {
             messages: [message],
             latestMessageText: message.text,
             user1: null,
-            user1UnreadMsg: 1
           };
         } else {
           newState.forEach((convo, index) => {
@@ -126,20 +123,6 @@ const Home = ({ user, logout }) => {
                 convo.messages.unshift(message);
                 convo.latestMessageText = message.text;
                 currentConv = convo;
-                let user1UnreadMsg = convo.hasOwnProperty('user1UnreadMsg')
-                  ? convo.user1UnreadMsg : 0;
-                let user2UnreadMsg = convo.hasOwnProperty('user2UnreadMsg')
-                  ? convo.user2UnreadMsg : 0;
-                if (!onActiveChat) {
-                (convo.hasOwnProperty('user1')) ?
-                  ++user1UnreadMsg :
-                  ++user2UnreadMsg;
-                } else {
-                  //because in backend always increase the number
-                  axios.patch('/api/conversations/read-status', { id: convo.id });
-                }
-                currentConv.user1UnreadMsg = user1UnreadMsg;
-                currentConv.user2UnreadMsg = user2UnreadMsg;
                 newState.splice(index, 1);
                 return;
               }
@@ -163,28 +146,11 @@ const Home = ({ user, logout }) => {
       setConversations(newState);
 
     },
-    [setConversations, conversations, activeUserId]
+    [setConversations, conversations]
   );
 
-  const resetUnreadMessage = (conversation) => {
-    conversation.hasOwnProperty('user1')
-      ? conversation.user1UnreadMsg = 0 :
-      conversation.user2UnreadMsg = 0;
-    const body = {
-      id: conversation.id,
-      user1UnreadMsg: conversation.user1UnreadMsg,
-      user2UnreadMsg: conversation.user2UnreadMsg
-    };
-    axios.patch('/api/conversations/read-status', body);
-  }
-
   const setActiveChat = (conversation) => {
-    resetUnreadMessage(conversation);
     setActiveConversation(conversation.otherUser.username);
-
-    const activeUserId = conversation.otherUser.id;
-    setActiveUserId(activeUserId);
-    console.log((activeUserId));
   };
 
   const addOnlineUser = useCallback((id) => {

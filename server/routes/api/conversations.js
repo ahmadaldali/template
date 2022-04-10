@@ -3,9 +3,6 @@ const { User, Conversation, Message } = require("../../db/models");
 const { Op } = require("sequelize");
 const onlineUsers = require("../../onlineUsers");
 
-const {decreaseUnreadMessage} = require('../readStatus')
-
-
 // get all conversations for a user, include latest message text for preview, and all messages
 // include other user model so we have info on username/profile pic (don't include current user info)
 router.get("/", async (req, res, next) => {
@@ -21,7 +18,7 @@ router.get("/", async (req, res, next) => {
           user2Id: userId,
         },
       },
-      attributes: ["id", "user1UnreadMsg", "user2UnreadMsg"],
+      attributes: ["id"],
       order: [[Message, "createdAt", "DESC"]],
       include: [
         { model: Message, order: ["createdAt", "DESC"] },
@@ -79,48 +76,4 @@ router.get("/", async (req, res, next) => {
     next(error);
   }
 });
-
-
-router.patch("/read-status", async (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.sendStatus(401);
-    }
-    const { id, user1UnreadMsg, user2UnreadMsg } = req.body;
-    const conversation = await Conversation.findByPk(id);
-    let updateConversation = null;
-    if (conversation) {
-      if (req.user.id !== conversation.user1Id
-        && req.user.id != conversation.user2Id) {
-        return res.sendStatus(401);
-      }
-      updateConversation = await Conversation.updateConversation(conversation, user1UnreadMsg, user2UnreadMsg);
-    }
-    res.json(updateConversation);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.patch("/decrease-read", async (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.sendStatus(401);
-    }
-    const { id } = req.body;
-    const conversation = await Conversation.findByPk(id);
-
-    if (conversation) {
-      if (req.user.id !== conversation.user1Id
-        && req.user.id != conversation.user2Id) {
-        return res.sendStatus(401);
-      }
-      decreaseUnreadMessage(conversation, req.user.id);
-    }
-    res.json(null);
-  } catch (error) {
-    next(error);
-  }
-});
-
 module.exports = router;
