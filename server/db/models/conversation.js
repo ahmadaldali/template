@@ -29,20 +29,15 @@ Conversation.findConversation = async function (user1Id, user2Id) {
 };
 
 
-Conversation.updateConversation = async function (id, user1UnreadMsg = 0, user2UnreadMsg = 0) {
-  const conversation = await Conversation.findByPk(id);
-  if (conversation) {
+Conversation.updateConversation = async function (conversation, user1UnreadMsg = 0, user2UnreadMsg = 0) {
     const values = {
       user1Id: conversation.user1Id,
       user2Id: conversation.user2Id,
       user1UnreadMsg: user1UnreadMsg,
       user2UnreadMsg: user2UnreadMsg
     }
-    conversation.update(values).then(updatedRecord => {
-      return updatedRecord;
-    });
-  }
-  return null;
+    const updatedRecord= await conversation.update(values);
+    return updatedRecord;
 };
 
 module.exports = Conversation;

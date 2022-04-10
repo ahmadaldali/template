@@ -6,14 +6,6 @@ const MessageGroup = db.define("messageGroup", {
     type: Sequelize.STRING,
     allowNull: false,
   },
-  senderId: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-  },
-  groupId: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-  },
 });
 
 module.exports = MessageGroup;

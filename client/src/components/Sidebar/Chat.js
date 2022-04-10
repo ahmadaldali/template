@@ -35,7 +35,6 @@ const Chat = ({ conversation, setActiveChat }) => {
   const classes = useStyles();
   const { otherUser } = conversation;
 
-  console.log(conversation);
   const unreadMsgs = conversation.hasOwnProperty('user1')
                      ? conversation.user1UnreadMsg
                      : conversation.user2UnreadMsg;
@@ -52,6 +51,7 @@ const Chat = ({ conversation, setActiveChat }) => {
         online={otherUser.online}
         sidebar={true}
       />
+
       <ChatContent conversation={conversation} />
       <UnReadMessage unreadMsgs={unreadMsgs} />
     </Box>
