@@ -41,7 +41,6 @@ const Home = ({ user, logout }) => {
         newState.push(fakeConvo);
       }
     });
-
     setConversations(newState);
   };
 
@@ -65,60 +64,93 @@ const Home = ({ user, logout }) => {
   const postMessage = (body) => {
     try {
       const data = saveMessage(body);
-
-      if (!body.conversationId) {
-        addNewConvo(body.recipientId, data.message);
-      } else {
-        addMessageToConversation(data);
-      }
-
-      sendMessage(data, body);
+      data.then(res => {
+        if (!body.conversationId) {
+          addNewConvo(body.recipientId, res.message);
+        } else {
+          addMessageToConversation(res, body.recipientId);
+        }
+        sendMessage(res, body);
+      });
     } catch (error) {
       console.error(error);
     }
   };
 
+
   const addNewConvo = useCallback(
     (recipientId, message) => {
-      conversations.forEach((convo) => {
+      let newState = [...conversations];
+      let currentConv = null
+      conversations.forEach((convo, index) => {
         if (convo.otherUser.id === recipientId) {
-          convo.messages.push(message);
+          convo.messages.unshift(message);
           convo.latestMessageText = message.text;
-          convo.id = message.conversationId;
+          currentConv = convo;
+          const idRandom = (Math.random() + 1).toString(36).substring(7);
+          currentConv.id = idRandom;
+          newState.splice(index, 1);
+          return;
         }
       });
-      setConversations(conversations);
+      console.log(currentConv);
+      if (currentConv != null) newState.unshift(currentConv);
+      setConversations(newState);
     },
     [setConversations, conversations]
   );
 
   const addMessageToConversation = useCallback(
-    (data) => {
-      // if sender isn't null, that means the message needs to be put in a brand new convo
-      const { message, sender = null } = data;
-      if (sender !== null) {
-        const newConvo = {
-          id: message.conversationId,
-          otherUser: sender,
-          messages: [message],
-        };
-        newConvo.latestMessageText = message.text;
-        setConversations((prev) => [newConvo, ...prev]);
+    (data, recipientId) => {
+      const { message, sender } = data;
+      const newState = [...conversations];
+      let currentConv = null;
+
+      if (recipientId === undefined) {
+        //recipient  
+        if (sender !== null) {
+          //new conversation
+          currentConv = {
+            id: message.conversationId,
+            otherUser: sender,
+            messages: [message],
+            latestMessageText: message.text,
+            user1: null,
+          };
+        } else {
+          newState.forEach((convo, index) => {
+            if (convo.id === message.conversationId && convo.otherUser.id === message.senderId) {
+                convo.messages.unshift(message);
+                convo.latestMessageText = message.text;
+                currentConv = convo;
+                newState.splice(index, 1);
+                return;
+              }
+          });
+        }
+      } else {
+        //sender side
+        newState.forEach((convo, index) => {
+          if (convo.otherUser.id === recipientId) {
+            convo.messages.unshift(message);
+            convo.latestMessageText = message.text;
+            //remove this conv and set it as the first
+            currentConv = convo;
+            newState.splice(index, 1);
+            return;
+          }
+        });
       }
 
-      conversations.forEach((convo) => {
-        if (convo.id === message.conversationId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
-        }
-      });
-      setConversations(conversations);
+      if (currentConv != null) newState.unshift(currentConv);
+      setConversations(newState);
+
     },
     [setConversations, conversations]
   );
 
-  const setActiveChat = (username) => {
-    setActiveConversation(username);
+  const setActiveChat = (conversation) => {
+    setActiveConversation(conversation.otherUser.username);
   };
 
   const addOnlineUser = useCallback((id) => {

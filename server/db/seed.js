@@ -51,10 +51,13 @@ async function seed() {
     photoUrl:
       "https://res.cloudinary.com/dmlvthmqr/image/upload/v1607914468/messenger/8bc2e13b8ab74765fd57f0880f318eed1c3fb001_fownwt.png",
   });
+
+  
   const chiumboConvo = await Conversation.create({
     user1Id: chiumbo.id,
     user2Id: thomas.id,
   });
+
   await Message.create({
     conversationId: chiumboConvo.id,
     senderId: chiumbo.id,
@@ -68,6 +71,7 @@ async function seed() {
     photoUrl:
       "https://res.cloudinary.com/dmlvthmqr/image/upload/v1607914466/messenger/6c4faa7d65bc24221c3d369a8889928158daede4_vk5tyg.png",
   });
+
   const hualingConvo = await Conversation.create({
     user2Id: hualing.id,
     user1Id: thomas.id,
@@ -88,7 +92,6 @@ async function seed() {
   });
 
   const otherUsers = await Promise.all([
-    ,
     User.create({
       username: "ashanti",
       email: "ashanti@email.com",
