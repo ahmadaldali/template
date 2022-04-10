@@ -94,7 +94,6 @@ const Home = ({ user, logout }) => {
           return;
         }
       });
-      console.log(currentConv);
       if (currentConv != null) newState.unshift(currentConv);
       setConversations(newState);
     },
@@ -106,7 +105,6 @@ const Home = ({ user, logout }) => {
       const { message, sender } = data;
       const newState = [...conversations];
       let currentConv = null;
-      console.log((activeUserId));
       const onActiveChat = (activeUserId === message.senderId);
       if (recipientId === undefined) {
         //recipient  
@@ -184,7 +182,6 @@ const Home = ({ user, logout }) => {
 
     const activeUserId = conversation.otherUser.id;
     setActiveUserId(activeUserId);
-    console.log((activeUserId));
   };
 
   const addOnlineUser = useCallback((id) => {
